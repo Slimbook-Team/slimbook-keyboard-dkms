@@ -1,0 +1,6 @@
+slimbook-keyboard-dkms (0.0) focal; urgency=low
+
+  * Automatically packaged by DKMS.
+
+ -- Slimbook <dev@slimbook.es>  Fri, 09 Sep 2022 11:22:34 +0200
+

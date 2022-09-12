@@ -1,0 +1,15 @@
+Source: slimbook-keyboard-dkms
+Section: misc
+Priority: optional
+Maintainer: Slimbook <dev@slimbook.es>
+Build-Depends: debhelper (>= 7), dkms
+Standards-Version: 4.5.0
+
+Package: slimbook-keyboard-dkms
+Architecture: amd64
+Provides: slimbook-keyboard-modules (= 0.0)
+Depends: dkms (>= 1.95), ${misc:Depends}
+Description: slimbook-keyboard driver in DKMS format.
+ Keyboard module for Slimbook Essential model 
+ (and laptops with similar keyboards), using clevo_platform
+ kernel module.
