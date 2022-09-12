@@ -9,7 +9,7 @@
   </a>
 </p>
 
-> Keyboard module for Slimbook Essential model (and laptops with similar keyboards), using  [clevo_platform kernel module](https://github.com/slimbook/keyboard_module).
+> Keyboard module for Slimbook Essential model (and laptops with similar keyboards), using clevo_platform kernel module.
 
 > This module conflicts with clevo-xsm-wmi, and tuxedo_keyboard modules
 
