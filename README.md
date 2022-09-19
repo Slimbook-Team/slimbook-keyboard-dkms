@@ -11,7 +11,7 @@
 
 > Keyboard module for Slimbook Essential model (and laptops with similar keyboards), using clevo_platform kernel module.
 
-> This module conflicts with clevo-xsm-wmi, and tuxedo_keyboard modules
+
 
 ### 🏠 [Homepage](https://github.com/slimbook/slimbook-keyboard-dkms)
 
@@ -35,6 +35,9 @@ Give a ⭐️ if this project helped you!
 <a href="https://www.patreon.com/slimbook">
   <img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
 </a>
+
+
+> This module conflicts with clevo-xsm-wmi, and tuxedo_keyboard modules
 
 ## 📝 License
 
