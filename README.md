@@ -11,7 +11,7 @@
 
 > Keyboard module for Slimbook Essential model (and laptops with similar keyboards), using clevo_platform kernel module.
 
-
+The modue referenced <clevo_platform> is [here](https://github.com/slimbook/keyboard_module).
 
 ### 🏠 [Homepage](https://github.com/slimbook/slimbook-keyboard-dkms)
 
