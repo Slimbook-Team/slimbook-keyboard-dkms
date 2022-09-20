@@ -9,11 +9,10 @@
   </a>
 </p>
 
-> Keyboard module for Slimbook Essential model (and laptops with similar keyboards), using clevo_platform kernel module.
+For Classic and Katana 1 models, this application allows you to configure the touchpad in basic aspects, such as natural scrolling, tap to click, or tap with 2 or 3 fingers.
 
-The modue referenced <clevo_platform> is [here](https://github.com/slimbook/keyboard_module).
 
-### 🏠 [Homepage](https://github.com/slimbook/slimbook-keyboard-dkms)
+### 🏠 [Homepage](https://github.com/slimbook/slimbook-touchpad)
 
 ## Author
 
@@ -26,7 +25,7 @@ The modue referenced <clevo_platform> is [here](https://github.com/slimbook/keyb
 
 ## 🤝 Contributing
 
-Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/slimbook/slimbook-keyboard-dkms/issues). 
+Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/slimbook/slimbook-touchpad/issues). 
 
 ## Show your support
 
@@ -35,9 +34,6 @@ Give a ⭐️ if this project helped you!
 <a href="https://www.patreon.com/slimbook">
   <img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
 </a>
-
-
-> This module conflicts with clevo-xsm-wmi, and tuxedo_keyboard modules
 
 ## 📝 License
 
