@@ -11,6 +11,11 @@
 
 > Keyboard module for Slimbook Essential model (and laptops with similar keyboards), using  [clevo_platform kernel module](https://github.com/slimbook/keyboard_module).
 
+# Install
+```shell
+   sudo apt-add-repository ppa:slimbook/slimbook
+   sudo apt install slimbook-keyboard-dkms
+```
 
 ### 🏠 [Homepage](https://github.com/slimbook/slimbook-keyboard-dkms)
 
