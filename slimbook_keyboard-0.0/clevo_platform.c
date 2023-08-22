@@ -31,6 +31,7 @@
 #include <acpi/acpi_bus.h>
 #include <acpi/acpi_drivers.h>
 #include <linux/platform_device.h>
+#include <linux/version.h>
 
 #define MODULE_NAME KBUILD_MODNAME
 
@@ -672,11 +673,19 @@ static int clevo_acpi_add(struct acpi_device *device)
 	return 0;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
+static void clevo_acpi_remove(struct acpi_device *device)
+{
+	pr_info("%s",__PRETTY_FUNCTION__);
+
+}
+#else
 static int clevo_acpi_remove(struct acpi_device *device)
 {
 	pr_info("%s",__PRETTY_FUNCTION__);
 	return 0;
 }
+#endif
 
 void clevo_acpi_notify(struct acpi_device *device, u32 event)
 {
