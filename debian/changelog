@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.1) jammy; urgency=medium
+
+  * Fixed builds on kernels 6.2
+
+ -- Slimbook <dev@slimbook.es>  Wed, 23 Aug 2023 19:17:55 +0200
+
 slimbook-keyboard-dkms (0.0) focal; urgency=low
 
   * Automatically packaged by DKMS.
