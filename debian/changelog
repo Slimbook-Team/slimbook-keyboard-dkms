@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.1.2) jammy; urgency=high
+
+  * Fixed post-install not running dkms for versions bigger than 0.0
+
+ -- Slimbook <dev@slimbook.es>  Sat, 26 Aug 2023 01:21:32 +0200
+
 slimbook-keyboard-dkms (0.1.1) jammy; urgency=medium
 
   * Dummy upgrade
