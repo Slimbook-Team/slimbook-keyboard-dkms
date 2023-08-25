@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.1.1) jammy; urgency=medium
+
+  * Dummy upgrade
+
+ -- Slimbook <dev@slimbook.es>  Fri, 25 Aug 2023 12:50:15 +0200
+
 slimbook-keyboard-dkms (0.1) jammy; urgency=medium
 
   * Fixed builds on kernels 6.2
