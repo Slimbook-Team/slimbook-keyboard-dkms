@@ -50,11 +50,17 @@ MODULE_LICENSE("GPL");
 #define WMI_SUBMETHOD_ID_GET_EVENT 0x01
 #define WMI_SUBMETHOD_ID_GET_AP 0x46
 #define WMI_SUBMETHOD_ID_SET_KB_LEDS 0x67
+#define WMI_SUBMETHOD_ID_SET_KB_LEDS_BW 0x27
+#define WMI_SUBMETHOD_ID_GET_BIOS_1 0x52
+#define WMI_SUBMETHOD_ID_GET_BIOS_2 0x7A
 
 #define EVENT_CODE_DECREASE_BACKLIGHT 0x81
 #define EVENT_CODE_INCREASE_BACKLIGHT 0x82
+#define EVENT_CODE_DECREASE_BACKLIGHT_2 0x20
+#define EVENT_CODE_INCREASE_BACKLIGHT_2 0x21
 #define EVENT_CODE_NEXT_BLINKING_PATTERN 0x83
 #define EVENT_CODE_TOGGLE_STATE 0x9F
+#define EVENT_CODE_TOGGLE_STATE_2 0x3F
 
 #define REGION_LEFT 0xF0000000
 #define REGION_CENTER 0xF1000000
@@ -63,7 +69,9 @@ MODULE_LICENSE("GPL");
 
 #define BRIGHTNESS_MIN 0
 #define BRIGHTNESS_MAX 255
+#define BRIGHTNESS_MAX_BW 2
 #define BRIGHTNESS_DEFAULT BRIGHTNESS_MAX
+#define BRIGHTNESS_DEFAULT_BW BRIGHTNESS_MAX_BW
 #define BRIGHTNESS_STEP 25
 
 #define KB_COLOR_DEFAULT 0xFFFFFF
@@ -72,6 +80,9 @@ MODULE_LICENSE("GPL");
 #define CLEVO_MODEL_UNKNOWN 0x00
 #define CLEVO_MODEL_V1 0x01
 #define CLEVO_MODEL_V2 0x02
+
+#define KB_TYPE_BW 0
+#define KB_TYPE_RGB 1
 
 u32 model = CLEVO_MODEL_UNKNOWN;
 
@@ -122,6 +133,7 @@ static struct blinking_pattern_t blinking_patterns[] = {
 // Keyboard struct
 struct kbd_led_state_t
 {
+	u8 mode; /* 0 bw, 1 rgb */
 	u8 has_extra;
 	u8 enabled;
 
@@ -139,6 +151,7 @@ struct kbd_led_state_t
 };
 
 static struct kbd_led_state_t kbd_led_state = {
+	.mode = KB_TYPE_BW,
 	.has_extra = 0,
 	.enabled = 1,
 	.color = {
@@ -474,10 +487,20 @@ static u32 clevo_evaluate_method(u32 cmd, u32 arg, u32 *result)
 
 static void set_brightness(u8 brightness)
 {
-	pr_info("Set brightness on %d", brightness);
-	if (!clevo_evaluate_method(WMI_SUBMETHOD_ID_SET_KB_LEDS, 0xF4000000 | brightness, NULL))
-	{
-		kbd_led_state.brightness = brightness;
+	if (kbd_led_state.mode == KB_TYPE_RGB) {
+		pr_info("Set rgb brightness on %d", brightness);
+		if (!clevo_evaluate_method(WMI_SUBMETHOD_ID_SET_KB_LEDS, 0xF4000000 | brightness, NULL))
+		{
+			kbd_led_state.brightness = brightness;
+		}
+	}
+	
+	if (kbd_led_state.mode == KB_TYPE_BW) {
+		pr_info("Set brightness on %d", brightness);
+		if (!clevo_evaluate_method(WMI_SUBMETHOD_ID_SET_KB_LEDS_BW, brightness, NULL))
+		{
+			kbd_led_state.brightness = brightness;
+		}
 	}
 }
 
@@ -576,7 +599,7 @@ static int set_enabled_cmd(u8 state)
 	pr_info("Set keyboard enabled to: %d\n", state);
 	// pr_info("Has_extra: %d; Enabled %d; Brightness: %d; Blinking Pattern: %d; whole_kbd_color: %d;", kbd_led_state.has_extra, kbd_led_state.enabled, kbd_led_state.brightness, kbd_led_state.blinking_pattern, kbd_led_state.whole_kbd_color);
 
-		if (state == 0)
+	if (state == 0)
 	{
 		cmd |= 0x003001;
 	}
@@ -608,36 +631,62 @@ void clevo_keyboard_event_callb(u32 event)
 
 	switch (key_event)
 	{
+	case EVENT_CODE_DECREASE_BACKLIGHT_2:
 	case EVENT_CODE_DECREASE_BACKLIGHT:
-		if (kbd_led_state.brightness == BRIGHTNESS_MIN || (kbd_led_state.brightness - 25) < BRIGHTNESS_MIN)
-		{
-			set_brightness(BRIGHTNESS_MIN);
-		}
-		else
-		{
-			set_brightness(kbd_led_state.brightness - 25);
+		if (kbd_led_state.mode == KB_TYPE_RGB) {
+			if (kbd_led_state.brightness == BRIGHTNESS_MIN || (kbd_led_state.brightness - 25) < BRIGHTNESS_MIN) {
+				set_brightness(BRIGHTNESS_MIN);
+			}
+			else {
+				set_brightness(kbd_led_state.brightness - 25);
+			}
 		}
 
+		if (kbd_led_state.mode == KB_TYPE_BW) {
+			if (kbd_led_state.brightness == BRIGHTNESS_MIN) {
+				set_brightness(BRIGHTNESS_MIN);
+			}
+			else {
+				set_brightness(kbd_led_state.brightness - 1);
+			}
+		}
 		break;
-
+	case EVENT_CODE_INCREASE_BACKLIGHT_2:
 	case EVENT_CODE_INCREASE_BACKLIGHT:
-		if (kbd_led_state.brightness == BRIGHTNESS_MAX || (kbd_led_state.brightness + 25) > BRIGHTNESS_MAX)
-		{
-			set_brightness(BRIGHTNESS_MAX);
+		if (kbd_led_state.mode == KB_TYPE_RGB) {
+			if (kbd_led_state.brightness == BRIGHTNESS_MAX || (kbd_led_state.brightness + 25) > BRIGHTNESS_MAX) {
+				set_brightness(BRIGHTNESS_MAX);
+			}
+			else {
+				set_brightness(kbd_led_state.brightness + 25);
+			}
 		}
-		else
-		{
-			set_brightness(kbd_led_state.brightness + 25);
+		
+		if (kbd_led_state.mode == KB_TYPE_BW) {
+			if (kbd_led_state.brightness >= BRIGHTNESS_MAX_BW) {
+				set_brightness(BRIGHTNESS_MAX_BW);
+			}
+			else {
+				set_brightness(kbd_led_state.brightness + 1);
+			}
 		}
-
 		break;
 
 	case EVENT_CODE_NEXT_BLINKING_PATTERN:
-		set_next_color_whole_kb();
+		if (kbd_led_state.mode == KB_TYPE_RGB) {
+			set_next_color_whole_kb();
+		}
 		break;
 
+	case EVENT_CODE_TOGGLE_STATE_2:
 	case EVENT_CODE_TOGGLE_STATE:
-		set_enabled(kbd_led_state.enabled == 0 ? 1 : 0);
+		if (kbd_led_state.mode == KB_TYPE_RGB) {
+			set_enabled(kbd_led_state.enabled == 0 ? 1 : 0);
+		}
+		
+		if (kbd_led_state.mode == KB_TYPE_BW) {
+			set_brightness(kbd_led_state.brightness == 0 ? 2 : 0);
+		}
 		break;
 
 	default:
@@ -720,9 +769,15 @@ void clevo_keyboard_write_state(void)
 	// - set_blinking_pattern also writes colors
 	// - set_brightness, set_enabled, set_blinking_pattern
 	//   still also update state
-	set_blinking_pattern(kbd_led_state.blinking_pattern);
-	set_brightness(kbd_led_state.brightness);
-	set_enabled(kbd_led_state.enabled);
+	if (kbd_led_state.mode == KB_TYPE_RGB) {
+		set_blinking_pattern(kbd_led_state.blinking_pattern);
+		set_brightness(kbd_led_state.brightness);
+		set_enabled(kbd_led_state.enabled);
+	}
+
+	if (kbd_led_state.mode == KB_TYPE_BW) {
+		set_brightness(kbd_led_state.brightness);
+	}
 }
 
 
@@ -869,21 +924,45 @@ static int __init clevo_platform_init(void)
 		goto error_device_add;
 	}
 
+	uint32_t value;
+	uint32_t status = clevo_evaluate_method(WMI_SUBMETHOD_ID_GET_BIOS_1,0x00,&value);
+	
+	if (!status) {
+		pr_info("Bios Feature register:%x\n",value);
+		
+		if ((value & 0x40000000) == 0) {
+			kbd_led_state.mode = KB_TYPE_RGB;
+			pr_info("RGB keyboard found\n");
+		}
+		else {
+			pr_info("Single color keyboard found\n");
+		}
+
+	}
 	// Init state from params
+	
 	kbd_led_state.color.left = param_color_left;
 	kbd_led_state.color.center = param_color_center;
 	kbd_led_state.color.right = param_color_right;
 	kbd_led_state.color.extra = param_color_extra;
-	if (param_brightness > BRIGHTNESS_MAX) param_brightness = BRIGHTNESS_DEFAULT;
+	if (kbd_led_state.mode == KB_TYPE_RGB) {
+		if (param_brightness > BRIGHTNESS_MAX) param_brightness = BRIGHTNESS_DEFAULT;
+	}
+	
+	if (kbd_led_state.mode == KB_TYPE_BW) {
+		if (param_brightness > BRIGHTNESS_MAX_BW) param_brightness = BRIGHTNESS_DEFAULT_BW;
+	}
+
 	kbd_led_state.brightness = param_brightness;
 	kbd_led_state.blinking_pattern = param_blinking_pattern;
 	kbd_led_state.enabled = param_state;
 
 	clevo_keyboard_write_state();
-
+	
+	/*
 	pr_info("Has_extra: %d; Enabled %d; Brightness: %d; Blinking Pattern: %d; Color Pattern: %d; whole_kbd_color: %d;", kbd_led_state.has_extra, kbd_led_state.enabled, kbd_led_state.brightness, kbd_led_state.blinking_pattern, kbd_led_state.color.center, kbd_led_state.whole_kbd_color);
-
-
+	*/
+	
 	return 0;
 
 	error_device_add:
@@ -909,6 +988,10 @@ static void __exit clevo_platform_exit(void)
 
 	if (active_device) {
 		acpi_bus_unregister_driver(&clevo_acpi_driver);
+	}
+	
+	if (model == CLEVO_MODEL_V1) {
+		wmi_remove_notify_handler(CLEVO_V1_EVENT_GUID);
 	}
 }
 
