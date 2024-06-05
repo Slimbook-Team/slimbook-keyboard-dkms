@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.2.1) noble; urgency=medium
+
+  * Mapping left color region to white color keyboards
+
+ -- Slimbook <dev@slimbook.es>  Wed, 05 Jun 2024 23:01:28 +0200
+
 slimbook-keyboard-dkms (0.2.0) noble; urgency=medium
 
   * Added initial support for single color keyboards

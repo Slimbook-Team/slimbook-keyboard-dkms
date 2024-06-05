@@ -513,7 +513,8 @@ static void set_brightness(u8 brightness)
 
 static int set_color(u32 region, u32 color)
 {
-	if (kbd_led_state.mode == KB_TYPE_BW) {
+	if (kbd_led_state.mode == KB_TYPE_BW && region == REGION_LEFT) {
+		set_brightness(color);
 		return 0;
 	}
 	
