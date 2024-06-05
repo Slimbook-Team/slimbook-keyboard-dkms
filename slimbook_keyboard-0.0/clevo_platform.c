@@ -69,7 +69,7 @@ MODULE_LICENSE("GPL");
 
 #define BRIGHTNESS_MIN 0
 #define BRIGHTNESS_MAX 255
-#define BRIGHTNESS_MAX_BW 2
+#define BRIGHTNESS_MAX_BW 5
 #define BRIGHTNESS_DEFAULT BRIGHTNESS_MAX
 #define BRIGHTNESS_DEFAULT_BW BRIGHTNESS_MAX_BW
 #define BRIGHTNESS_STEP 25
@@ -303,6 +303,12 @@ static ssize_t set_brightness_fs(struct device *child,
 	}
 
 	val = clamp_t(u8, val, BRIGHTNESS_MIN, BRIGHTNESS_MAX);
+	
+	if (kbd_led_state.mode == KB_TYPE_BW) {
+		int ratio = BRIGHTNESS_MAX/BRIGHTNESS_MAX_BW;
+		val = val / ratio;
+	}
+	
 	set_brightness(val);
 
 	return size;
@@ -381,9 +387,9 @@ static u32 clevo_wmi_evaluate_wmbb_method(u32 method_id, u32 arg,
 	u32 *retval)
 {
 	struct acpi_buffer in  = { (acpi_size) sizeof(arg), &arg };
-		struct acpi_buffer out = { ACPI_ALLOCATE_BUFFER, NULL };
-		union acpi_object *obj;
-		acpi_status status;
+	struct acpi_buffer out = { ACPI_ALLOCATE_BUFFER, NULL };
+	union acpi_object *obj;
+	acpi_status status;
 	u32 tmp;
 
 	pr_debug("%0#4x  IN : %0#6x\n", method_id, arg);
@@ -391,26 +397,28 @@ static u32 clevo_wmi_evaluate_wmbb_method(u32 method_id, u32 arg,
 	status = wmi_evaluate_method(CLEVO_V1_GET_GUID, 0x00,
 		method_id, &in, &out);
 
-	if (unlikely(ACPI_FAILURE(status)))
+	if (unlikely(ACPI_FAILURE(status))) {
 		goto exit;
+	}
 
 	obj = (union acpi_object *) out.pointer;
-	if (obj && obj->type == ACPI_TYPE_INTEGER)
-			tmp = (u32) obj->integer.value;
-	else
-			tmp = 0;
+	if (obj && obj->type == ACPI_TYPE_INTEGER) {
+		tmp = (u32) obj->integer.value;
+	}
+	else {
+		tmp = 0;
+	}
 
 	pr_debug("%0#4x  OUT: %0#6x (IN: %0#6x)\n", method_id, tmp, arg);
 
-	if (likely(retval))
-			*retval = tmp;
-
-	kfree(obj);
+	if (likely(retval)) {
+		*retval = tmp;
+	}
 
 exit:
 	if (unlikely(ACPI_FAILURE(status)))
 		return -EIO;
-
+	
 	return 0;
 }
 
@@ -488,17 +496,16 @@ static u32 clevo_evaluate_method(u32 cmd, u32 arg, u32 *result)
 static void set_brightness(u8 brightness)
 {
 	if (kbd_led_state.mode == KB_TYPE_RGB) {
-		pr_info("Set rgb brightness on %d", brightness);
 		if (!clevo_evaluate_method(WMI_SUBMETHOD_ID_SET_KB_LEDS, 0xF4000000 | brightness, NULL))
 		{
+			pr_info("Set rgb brightness to %d\n", brightness);
 			kbd_led_state.brightness = brightness;
 		}
 	}
 	
 	if (kbd_led_state.mode == KB_TYPE_BW) {
-		pr_info("Set brightness on %d", brightness);
-		if (!clevo_evaluate_method(WMI_SUBMETHOD_ID_SET_KB_LEDS_BW, brightness, NULL))
-		{
+		if (!clevo_evaluate_method(WMI_SUBMETHOD_ID_SET_KB_LEDS_BW, brightness, NULL)) {
+			pr_info("Set brightness to %d\n", brightness);
 			kbd_led_state.brightness = brightness;
 		}
 	}
@@ -506,6 +513,10 @@ static void set_brightness(u8 brightness)
 
 static int set_color(u32 region, u32 color)
 {
+	if (kbd_led_state.mode == KB_TYPE_BW) {
+		return 0;
+	}
+	
 	u32 cset =
 		((color & 0x0000FF) << 16) | ((color & 0xFF0000) >> 8) |
 		((color & 0x00FF00) >> 8);
@@ -621,15 +632,15 @@ static void set_enabled(u8 state)
 
 void clevo_keyboard_event_callb(u32 event)
 {
-	u32 key_event;
+	//u32 key_event;
 
-	// pr_info("event callback: (%0#10x)\n", event);
+	pr_debug("event callback: (%0#10x)\n", event);
 
-	clevo_evaluate_method(0x01, 0, &key_event);
+	//clevo_evaluate_method(0x01, 0, &key_event);
 
-	pr_info("event catched: (%0#6x)\n", key_event);
+	//pr_info("event catched: (%0#6x)\n", key_event);
 
-	switch (key_event)
+	switch (event)
 	{
 	case EVENT_CODE_DECREASE_BACKLIGHT_2:
 	case EVENT_CODE_DECREASE_BACKLIGHT:
@@ -643,12 +654,12 @@ void clevo_keyboard_event_callb(u32 event)
 		}
 
 		if (kbd_led_state.mode == KB_TYPE_BW) {
-			if (kbd_led_state.brightness == BRIGHTNESS_MIN) {
-				set_brightness(BRIGHTNESS_MIN);
+			
+			if (kbd_led_state.brightness > BRIGHTNESS_MIN) {
+				kbd_led_state.brightness--;
 			}
-			else {
-				set_brightness(kbd_led_state.brightness - 1);
-			}
+			set_brightness(kbd_led_state.brightness );
+
 		}
 		break;
 	case EVENT_CODE_INCREASE_BACKLIGHT_2:
@@ -663,12 +674,12 @@ void clevo_keyboard_event_callb(u32 event)
 		}
 		
 		if (kbd_led_state.mode == KB_TYPE_BW) {
-			if (kbd_led_state.brightness >= BRIGHTNESS_MAX_BW) {
-				set_brightness(BRIGHTNESS_MAX_BW);
+		
+			kbd_led_state.brightness++;
+			if (kbd_led_state.brightness > BRIGHTNESS_MAX_BW) {
+				kbd_led_state.brightness = BRIGHTNESS_MAX_BW;
 			}
-			else {
-				set_brightness(kbd_led_state.brightness + 1);
-			}
+			set_brightness(kbd_led_state.brightness);
 		}
 		break;
 
@@ -685,11 +696,12 @@ void clevo_keyboard_event_callb(u32 event)
 		}
 		
 		if (kbd_led_state.mode == KB_TYPE_BW) {
-			set_brightness(kbd_led_state.brightness == 0 ? 2 : 0);
+			set_brightness(kbd_led_state.brightness == 0 ? BRIGHTNESS_MAX_BW : 0);
 		}
 		break;
 
 	default:
+		pr_info("unmanaged event: (%0#10x)\n", event);
 		break;
 	}
 }
@@ -704,7 +716,6 @@ static void clevo_wmi_notify(u32 value, void *context)
 	}
 
 	clevo_wmi_evaluate_wmbb_method(WMI_SUBMETHOD_ID_GET_EVENT, 0, &event);
-
 	clevo_keyboard_event_callb(event);
 }
 
@@ -738,7 +749,7 @@ static int clevo_acpi_remove(struct acpi_device *device)
 
 void clevo_acpi_notify(struct acpi_device *device, u32 event)
 {
-	// pr_info("event: %0#10x\n", event);
+	 pr_info("ACPI event: %0#10x\n", event);
 	clevo_keyboard_event_callb(event);
 }
 
@@ -792,16 +803,16 @@ static int clevo_platform_remove(struct platform_device *dev)
 
 static int clevo_platform_suspend(struct platform_device *dev, pm_message_t state)
 {
-	pr_info("%s",__PRETTY_FUNCTION__);
-	// turning the keyboard off prevents default colours showing on resume
-	set_enabled_cmd(0);
+	
+	if (kbd_led_state.mode == KB_TYPE_RGB) {
+		// turning the keyboard off prevents default colours showing on resume
+		set_enabled_cmd(0);
+	}
 	return 0;
 }
 
 static int clevo_platform_resume(struct platform_device *dev)
 {
-	pr_info("%s",__PRETTY_FUNCTION__);
-	pr_info("Has_extra: %d; Enabled %d; Brightness: %d; Blinking Pattern: %d; whole_kbd_color: %d;", kbd_led_state.has_extra, kbd_led_state.enabled, kbd_led_state.brightness, kbd_led_state.blinking_pattern, kbd_led_state.whole_kbd_color);
 
 	clevo_evaluate_method(WMI_SUBMETHOD_ID_GET_AP, 0, NULL);
 
