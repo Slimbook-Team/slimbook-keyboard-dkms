@@ -1,4 +1,4 @@
-slimbook-keyboard-dkms (0.2.1) noble; urgency=medium
+slimbook-keyboard-dkms (0.2.1) jammy; urgency=medium
 
   * Mapping left color region to white color keyboards
 
