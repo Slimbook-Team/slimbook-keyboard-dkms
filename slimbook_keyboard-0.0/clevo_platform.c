@@ -208,6 +208,10 @@ static int set_color_string_region(const char *color_string, size_t size, u32 re
 	return size;
 }
 
+void clevo_keyboard_event_callb(u32 event);
+void clevo_acpi_notify(struct acpi_device *device, u32 event);
+void clevo_keyboard_write_state(void);
+
 //
 
 static uint param_color_left = KB_COLOR_DEFAULT;
@@ -771,7 +775,9 @@ static struct acpi_driver clevo_acpi_driver = {
 		.remove = clevo_acpi_remove,
 		.notify = clevo_acpi_notify,
 	},
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
 	.owner = THIS_MODULE,
+#endif	
 };
 
 
