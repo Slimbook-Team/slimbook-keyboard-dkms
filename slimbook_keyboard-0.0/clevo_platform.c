@@ -798,7 +798,15 @@ void clevo_keyboard_write_state(void)
 	}
 }
 
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 11, 0)
+static void clevo_platform_remove(struct platform_device *dev)
+{
+	pr_info("%s",__PRETTY_FUNCTION__);
+	device_remove_file(&dev->dev, &dev_attr_brightness);
+	device_remove_file(&dev->dev, &dev_attr_state);
+	
+}
+#else
 static int clevo_platform_remove(struct platform_device *dev)
 {
 	pr_info("%s",__PRETTY_FUNCTION__);
@@ -807,6 +815,7 @@ static int clevo_platform_remove(struct platform_device *dev)
 	
 	return 0;
 }
+#endif
 
 static int clevo_platform_suspend(struct platform_device *dev, pm_message_t state)
 {
