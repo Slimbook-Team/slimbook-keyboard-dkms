@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.2.4) noble; urgency=medium
+
+  * Fixed for 6.12 api changes
+
+ -- Slimbook <dev@slimbook.es>  Mon, 23 Dec 2024 15:48:32 +0100
+
 slimbook-keyboard-dkms (0.2.3) noble; urgency=medium
 
   * Fixed for 6.11 api changes

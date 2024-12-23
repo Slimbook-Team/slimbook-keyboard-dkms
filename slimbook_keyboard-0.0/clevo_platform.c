@@ -711,6 +711,25 @@ void clevo_keyboard_event_callb(u32 event)
 	}
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 12, 0)
+static void clevo_wmi_notify(union acpi_object *obj, void *context)
+{
+	if (!obj)
+		return;
+
+	if (obj->type == ACPI_TYPE_INTEGER) {
+		u32 event = (u32) obj->integer.value;
+		
+		if (value != 0xD0) {
+			pr_info("Unexpected WMI event (%0#6x)\n", value);
+			return;
+		}
+		
+		clevo_wmi_evaluate_wmbb_method(WMI_SUBMETHOD_ID_GET_EVENT, 0, &event);
+		clevo_keyboard_event_callb(event);
+	}
+}
+#else
 static void clevo_wmi_notify(u32 value, void *context)
 {
 	u32 event;
@@ -723,6 +742,7 @@ static void clevo_wmi_notify(u32 value, void *context)
 	clevo_wmi_evaluate_wmbb_method(WMI_SUBMETHOD_ID_GET_EVENT, 0, &event);
 	clevo_keyboard_event_callb(event);
 }
+#endif
 
 static int clevo_acpi_add(struct acpi_device *device)
 {
