@@ -718,7 +718,8 @@ static void clevo_wmi_notify(union acpi_object *obj, void *context)
 		return;
 
 	if (obj->type == ACPI_TYPE_INTEGER) {
-		u32 event = (u32) obj->integer.value;
+		u32 event;
+		u32 value = (u32) obj->integer.value;
 		
 		if (value != 0xD0) {
 			pr_info("Unexpected WMI event (%0#6x)\n", value);
