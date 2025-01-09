@@ -721,12 +721,6 @@ static void clevo_wmi_notify(union acpi_object *obj, void *context)
 		u32 event;
 		u32 value = (u32) obj->integer.value;
 		
-		if (value != 0xD0) {
-			pr_info("Unexpected WMI event (%0#6x)\n", value);
-			return;
-		}
-		
-		clevo_wmi_evaluate_wmbb_method(WMI_SUBMETHOD_ID_GET_EVENT, 0, &event);
 		clevo_keyboard_event_callb(event);
 	}
 }
