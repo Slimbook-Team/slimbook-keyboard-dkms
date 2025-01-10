@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.2.8) noble; urgency=medium
+
+  * Fixed wmi notification on 6.12
+
+ -- Slimbook <dev@slimbook.es>  Fri, 10 Jan 2025 18:27:35 +0100
+
 slimbook-keyboard-dkms (0.2.5) noble; urgency=medium
 
   * Fixed typo in 6.12 codepath
