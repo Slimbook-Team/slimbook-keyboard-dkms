@@ -718,10 +718,9 @@ static void clevo_wmi_notify(union acpi_object *obj, void *context)
 		return;
 
 	if (obj->type == ACPI_TYPE_INTEGER) {
-		u32 event;
 		u32 value = (u32) obj->integer.value;
 		
-		clevo_keyboard_event_callb(event);
+		clevo_keyboard_event_callb(value);
 	}
 }
 #else
