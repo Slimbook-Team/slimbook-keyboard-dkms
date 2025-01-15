@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.2.8~bpo22.04.0) jammy; urgency=medium
+
+  * Backport from noble
+
+ -- Slimbook <dev@slimbook.es>  Wed, 15 Jan 2025 19:40:05 +0100
+
 slimbook-keyboard-dkms (0.2.8) noble; urgency=medium
 
   * Fixed wmi notification on 6.12
