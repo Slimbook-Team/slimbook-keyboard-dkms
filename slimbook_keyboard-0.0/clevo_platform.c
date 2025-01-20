@@ -28,6 +28,7 @@
 #include <linux/init.h>
 #include <linux/types.h>
 #include <linux/acpi.h>
+#include <linux/dmi.h>
 #include <acpi/acpi_bus.h>
 #include <acpi/acpi_drivers.h>
 #include <linux/platform_device.h>
@@ -87,6 +88,28 @@ MODULE_LICENSE("GPL");
 u32 model = CLEVO_MODEL_UNKNOWN;
 
 struct acpi_device *active_device = NULL;
+
+bool quirk_force_rgb_keyboard = false;
+
+static int __init slimbook_essential_15_amd_4700_dmi_cb(const struct dmi_system_id *id)
+{
+	quirk_force_rgb_keyboard = true;
+
+	return 1;
+}
+
+static const struct dmi_system_id slimbook_dmi_table[] __initconst = {
+	{
+		/* Slimbook ESSENTIAL 15 AMD 4700 */
+		.callback = slimbook_essential_15_amd_4700_dmi_cb,
+		.matches = {
+			DMI_EXACT_MATCH(DMI_PRODUCT_NAME,"ESSENTIAL15-AMD"),
+			DMI_EXACT_MATCH(DMI_BOARD_VENDOR, "SLIMBOOK"),
+			{ }
+		}
+	},
+	{}
+};
 
 struct color_t
 {
@@ -904,6 +927,8 @@ static int __init clevo_platform_init(void)
 
 	pr_info("%s",__PRETTY_FUNCTION__);
 
+	dmi_check_system(slimbook_dmi_table);
+
 	if (acpi_dev_found("CLV0001")) {
 		pr_info("Clevo device found");
 
@@ -980,6 +1005,12 @@ static int __init clevo_platform_init(void)
 		}
 
 	}
+	
+	if (model !=CLEVO_MODEL_UNKNOWN && quirk_force_rgb_keyboard) {
+		pr_info("quirk: force rgb keyboard\n");
+		kbd_led_state.mode = KB_TYPE_RGB;
+	}
+	
 	// Init state from params
 	
 	kbd_led_state.color.left = param_color_left;
