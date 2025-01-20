@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.2.9~bpo22.04.0) jammy; urgency=medium
+
+  * Essential amd backlight quirk
+
+ -- Slimbook <dev@slimbook.es>  Mon, 20 Jan 2025 19:01:21 +0100
+
 slimbook-keyboard-dkms (0.2.8~bpo22.04.0) jammy; urgency=medium
 
   * Backport from noble
