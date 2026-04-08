@@ -2,8 +2,9 @@ Source: slimbook-keyboard-dkms
 Section: misc
 Priority: optional
 Maintainer: Slimbook <dev@slimbook.es>
-Build-Depends: debhelper (>= 7), dkms
-Standards-Version: 4.5.0
+Build-Depends: debhelper-compat (=13), dkms
+Standards-Version: 4.6.0
+Homepage: https://github.com/Slimbook-Team/slimbook-keyboard-dkms
 
 Package: slimbook-keyboard-dkms
 Architecture: amd64
