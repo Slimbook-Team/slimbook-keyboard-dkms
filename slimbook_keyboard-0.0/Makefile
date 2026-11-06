@@ -1,17 +1,27 @@
 MODNAME = clevo_platform
 MODVER = 0.0
-obj-m += clevo_platform.o
-KDIR := /lib/modules/$(shell uname -r)/build
-PWD := $(shell pwd)
+
+# Kbuild part.
+# This branch is used when the Makefile is parsed by the kernel build system,
+# either for an in-place build or when building through DKMS.
+ifneq ($(KERNELRELEASE),)
+
+obj-m += $(MODNAME).o
 #CFLAGS_clevo_acpi.o := -DDEBUG
-                                                          
+
+else
+
+# Standalone part, used when running make directly from this directory.
+KDIR ?= /lib/modules/$(shell uname -r)/build
+PWD := $(CURDIR)
+
 MDIR = /usr/src/$(MODNAME)-$(MODVER)
 
 all:
-	make -C $(KDIR) M=$(PWD) modules
+	$(MAKE) -C $(KDIR) M=$(PWD) modules
 
 install:
-	make -C $(KDIR) M=$(PWD) modules_install
+	$(MAKE) -C $(KDIR) M=$(PWD) modules_install
 
 dkmsinstall:
 	mkdir -p $(MDIR)
@@ -27,4 +37,8 @@ dkmsuninstall:
 	rm -rf $(MDIR)
 
 clean:
-	make -C $(KDIR) M=$(PWD) clean
+	$(MAKE) -C $(KDIR) M=$(PWD) clean
+
+.PHONY: all install dkmsinstall dkmsuninstall clean
+
+endif
