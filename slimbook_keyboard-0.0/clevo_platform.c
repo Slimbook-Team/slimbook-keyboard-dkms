@@ -874,8 +874,24 @@ static int clevo_platform_resume(struct platform_device *dev)
 	return 0;
 }
 
+static void clevo_acpi_notify_handler(acpi_handle handle, u32 event, void *context)
+{
+	pr_info("ACPI event: %0#10x\n", event);
+	clevo_keyboard_event_callb(event);
+}
+
 static int clevo_platform_probe(struct platform_device *dev)
 {
+	struct acpi_device *adev = ACPI_COMPANION(&dev->dev);
+
+	if (adev) {
+		acpi_status status = acpi_install_notify_handler(ACPI_HANDLE(&dev->dev), ACPI_ALL_NOTIFY, clevo_acpi_notify_handler, NULL);
+
+		if (status != 0) {
+			pr_err("Failed to install acpi handler: %d\n",status);
+		}
+	}
+
 	if (device_create_file
 	    (&dev->dev, &dev_attr_brightness) != 0) {
 		pr_err
@@ -915,6 +931,7 @@ static struct platform_driver platform_driver_clevo = {
 		{
 			.name = KBUILD_MODNAME,
 			.owner = THIS_MODULE,
+			.acpi_match_table = device_ids,
 		},
 };
 
