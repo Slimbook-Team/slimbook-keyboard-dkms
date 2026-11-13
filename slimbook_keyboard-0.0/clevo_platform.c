@@ -86,8 +86,7 @@ MODULE_LICENSE("GPL");
 #define KB_TYPE_RGB 1
 
 u32 model = CLEVO_MODEL_UNKNOWN;
-
-struct acpi_device *active_device = NULL;
+static struct platform_device* platform_device_clevo;
 
 bool quirk_force_rgb_keyboard = false;
 
@@ -509,7 +508,8 @@ static u32 clevo_evaluate_method(u32 cmd, u32 arg, u32 *result)
 	u32 status;
 	// using ACPI method call
 	if (model == CLEVO_MODEL_V2) {
-		status = clevo_acpi_evaluate_method(active_device, cmd, arg, result);
+		struct acpi_device *adev = ACPI_COMPANION(&platform_device_clevo->dev);
+		status = clevo_acpi_evaluate_method(adev, cmd, arg, result);
 	}
 
 	// using WMI method call
@@ -761,39 +761,6 @@ static void clevo_wmi_notify(u32 value, void *context)
 }
 #endif
 
-static int clevo_acpi_add(struct acpi_device *device)
-{
-	u32 result;
-
-	pr_info("%s",__PRETTY_FUNCTION__);
-
-	active_device = device;
-
-	// This is the get_app method for the keyboard, without it we would not get event notifications.
-	clevo_acpi_evaluate_method(device, WMI_SUBMETHOD_ID_GET_AP, 0, &result);
-
-	return 0;
-}
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
-static void clevo_acpi_remove(struct acpi_device *device)
-{
-	pr_info("%s",__PRETTY_FUNCTION__);
-
-}
-#else
-static int clevo_acpi_remove(struct acpi_device *device)
-{
-	pr_info("%s",__PRETTY_FUNCTION__);
-	return 0;
-}
-#endif
-
-void clevo_acpi_notify(struct acpi_device *device, u32 event)
-{
-	 pr_info("ACPI event: %0#10x\n", event);
-	clevo_keyboard_event_callb(event);
-}
 
 static const struct acpi_device_id device_ids[] = {
 	{"CLV0001", 0},
@@ -801,21 +768,6 @@ static const struct acpi_device_id device_ids[] = {
 };
 
 MODULE_DEVICE_TABLE(acpi, device_ids);
-
-static struct acpi_driver clevo_acpi_driver = {
-	.name = "Clevo Keyboard",
-	.class = "Clevo",
-	.ids = device_ids,
-	.flags = ACPI_DRIVER_ALL_NOTIFY_EVENTS,
-	.ops = {
-		.add = clevo_acpi_add,
-		.remove = clevo_acpi_remove,
-		.notify = clevo_acpi_notify,
-	},
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0)
-	.owner = THIS_MODULE,
-#endif	
-};
 
 
 void clevo_keyboard_write_state(void)
@@ -935,8 +887,6 @@ static struct platform_driver platform_driver_clevo = {
 		},
 };
 
-static struct platform_device* platform_device_clevo;
-
 static int __init clevo_platform_init(void)
 {
 	int result = 0;
@@ -969,13 +919,7 @@ static int __init clevo_platform_init(void)
 				pr_info("Using Clevo ACPI");
 				model = CLEVO_MODEL_V2;
 
-				result = acpi_bus_register_driver(&clevo_acpi_driver);
-
-				if (result < 0) {
-					ACPI_DEBUG_PRINT((ACPI_DB_ERROR, "Error registering driver\n"));
-					return -ENODEV;
-				}
-
+				/* acpi handler is deferred at driver probe */
 			}
 			else {
 				pr_info("Unknown Clevo model");
@@ -1062,9 +1006,6 @@ static int __init clevo_platform_init(void)
 
 	platform_driver_unregister(&platform_driver_clevo);
 
-	if (active_device) {
-		acpi_bus_unregister_driver(&clevo_acpi_driver);
-	}
 
 	return -ENODEV;
 }
@@ -1072,12 +1013,11 @@ static int __init clevo_platform_init(void)
 static void __exit clevo_platform_exit(void)
 {
 	pr_info("%s",__PRETTY_FUNCTION__);
+	acpi_remove_notify_handler(ACPI_HANDLE(&platform_device_clevo->dev), ACPI_ALL_NOTIFY, clevo_acpi_notify_handler);
+
 	platform_device_unregister(platform_device_clevo);
 	platform_driver_unregister(&platform_driver_clevo);
 
-	if (active_device) {
-		acpi_bus_unregister_driver(&clevo_acpi_driver);
-	}
 	
 	if (model == CLEVO_MODEL_V1) {
 		wmi_remove_notify_handler(CLEVO_V1_EVENT_GUID);
