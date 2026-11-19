@@ -1,3 +1,9 @@
+slimbook-keyboard-dkms (0.2.10) resolute; urgency=medium
+
+  * Code has been migrated to 7.3 api changes
+
+ -- Slimbook <dev@slimbook.es>  Thu, 19 Nov 2026 09:41:17 +0100
+
 slimbook-keyboard-dkms (0.2.9~alpha3) resolute; urgency=medium
 
   * Fix broken package
